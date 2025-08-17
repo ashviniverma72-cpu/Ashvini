@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Educational Portal - User Management & Notes</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: Arial, sans-serif;
+    background: #f7f9fc;
+    margin: 0; padding: 20px;
+    display: flex; justify-content: center; align-items: flex-start; min-height: 100vh;
+  }
+  .container {
+    background: #fff;
+    max-width: 960px;
+    width: 100%;
+    padding: 30px 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.12);
+  }
+  h1,h2,h3 {
+    color: #222;
+    margin-bottom: 16px;
+  }
+  label {
+    cursor: pointer;
+    margin-right: 20px;
+    user-select: none;
+    font-weight: 600;
+  }
+  input[type=text], input[type=password], input[type=email], input[type=tel], select {
+    width: 100%;
+    max-width: 320px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+  }
+  button {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 7px;
+    background: #2f71f2;
+    color: white;
+    font-weight: 700;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+  }
+  button:hover {
+    background: #1a4db8;
+  }
+  .hidden {
+    display: none !important;
+  }
+  .slide {
+    display: none;
+  }
+  .slide.active {
+    display: block;
+  }
+  #usernameStatus, #newUsernameStatus {
+    font-size: 0.9em;
+    margin-top: 4px;
+  }
+  #usernameStatus.available, #newUsernameStatus.available {
+    color: #2c8a27;
+  }
+  #usernameStatus.existing, #newUsernameStatus.existing {
+    color: #cc2a2a;
+  }
+  /* Buttons */
+  #btnManageUsers, #btnAddUserForm, #btnLogout {
+    margin-right: 10px;
+    border-radius: 6px;
+  }
+  #btnManageUsers {
+    background: #3a8d23;
+  }
+  #btnManageUsers:hover {
+    background: #2e6b1c;
+  }
+  #btnAddUserForm {
+    background: #2e62be;
+  }
+  #btnAddUserForm:hover {
+    background: #244a8a;
+  }
+  #btnLogout {
+    background: #c23e3e;
+  }
+  #btnLogout:hover {
+    background: #822828;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+  }
+  th, td {
+    padding: 9px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+  th {
+    background: #d3e0ff;
+  }
+  .btn-small {
+    font-size: 0.85em;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    border: none;
+  }
+  .btn-delete {
+    background: #d73737;
+    color: white;
+  }
+  .btn-delete:hover {
+    background: #a42a2a;
+  }
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1200;
+    left: 0; top: 0; width: 100%; height: 100%;
+    overflow: auto;
+    background: rgba(0,0,0,0.45);
+  }
+  .modal-content {
+    background: white;
+    max-width: 750px;
+    margin: 75px auto;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    position: relative;
+  }
+  .closeBtn {
+    position: absolute;
+    right: 20px; top: 16px;
+    font-size: 1.5em;
+    color: #777;
+    cursor: pointer;
+    user-select: none;
+  }
+  .closeBtn:hover {
+    color: #222;
+  }
+  /* Google Drive Link Popup */
+  #notesPopupOverlay {
+    display: none;
+    position: fixed;
+    z-index: 1500;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+  }
+  #notesPopup {
+    background: white;
+    padding: 20px 25px;
+    max-width: 600px;
+    margin: 120px auto;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.4);
+    position: relative;
+  }
+  #notesPopup .closeBtn {
+    position: absolute;
+    top: 12px; right: 16px;
+    font-size: 1.4em;
+  }
+  #notesPopup a {
+    display: block;
+    margin-top: 22px;
+    color: #1155cc;
+    font-weight: 600;
+    word-break: break-word;
+  }
+  /* Upload Section */
+  #uploadSection {
+    margin-top: 25px;
+    border-top: 1px solid #ddd;
+    padding-top: 18px;
+  }
+  #uploadSection label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  #uploadSection input[type="file"] {
+    margin-bottom: 14px;
+  }
+  #uploadSection button {
+    margin-right: 14px;
+    padding: 8px 22px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container" role="main" aria-label="Educational Portal">
+
+  <!-- Slide 1: Login -->
+  <section id="slide-login" class="slide active" aria-labelledby="loginHeading" role="region">
+    <h1 id="loginHeading">Educational Portal - Login</h1>
+    <form id="loginForm" autocomplete="off" aria-describedby="loginHelp">
+      <p id="loginHelp">Select your role, enter your username and password if required.</p>
+
+      <fieldset>
+        <legend>Role</legend>
+        <label><input type="radio" name="role" value="owner" /> Owner</label>
+        <label><input type="radio" name="role" value="ceo" /> CEO</label>
+        <label><input type="radio" name="role" value="manager" /> Manager</label>
+        <label><input type="radio" name="role" value="member" checked /> Member</label>
+      </fieldset>
+
+      <div>
+        <label for="usernameInput">Username:</label>
+        <input type="text" id="usernameInput" name="username" required aria-required="true" aria-describedby="usernameStatus" />
+        <div id="usernameStatus" role="alert" aria-live="polite"></div>
+      </div>
+
+      <div id="passwordGroup" class="hidden">
+        <label for="passwordInput">Password:</label>
+        <input type="password" id="passwordInput" name="password" autocomplete="new-password" />
+      </div>
+
+      <button type="submit" id="btnLogin">Login</button>
+    </form>
+  </section>
+
+  <!-- Slide 2: Dashboard -->
+  <section id="slide-dashboard" class="slide" aria-labelledby="dashboardHeading" role="region" tabindex="0">
+    <h2 id="dashboardHeading">Welcome, <span id="displayRole"></span> (<span id="displayUsername"></span>)</h2>
+    
+    <div style="margin-bottom: 20px;">
+      <button id="btnManageUsers" class="hidden" title="Manage Users">Manage Users</button>
+      <button id="btnAddUserForm" class="hidden" title="CEO Add User Form">CEO Add User</button>
+      <button id="btnLogout">Logout</button>
+    </div>
+
+    <form id="classSubjectForm" aria-label="Select Class, Subject and Notes Type">
+      <div>
+        <label for="selectClass">Select Class:</label>
+        <select id="selectClass" required aria-required="true">
+          <option value="">--Select Class--</option>
+          <option value="8">Class 8</option>
+          <option value="9">Class 9</option>
+          <option value="10">Class 10</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="selectSubject">Select Subject:</label>
+        <select id="selectSubject" disabled required aria-required="true">
+          <option value="">--Select Subject--</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="selectNoteType">Select Notes Type:</label>
+        <select id="selectNoteType" disabled required aria-required="true">
+          <option value="">--Select Note Type--</option>
+          <option value="books">Books</option>
+          <option value="notes">Notes</option>
+          <option value="schoolNotes">School Notes</option>
+        </select>
+      </div>
+
+      <button type="button" id="btnShowNote" disabled>Show Notes</button>
+    </form>
+
+    <div id="notesDisplay" tabindex="0" aria-live="polite" aria-atomic="true" style="margin-top: 20px; border: 1px solid #c9daf8; border-radius: 8px; padding: 15px; min-height: 140px;">
+      <!-- Notes link or activity log will appear here -->
+    </div>
+
+    <section id="uploadSection" class="hidden" aria-label="File upload and management">
+      <h3>Upload / Delete File</h3>
+      <label for="fileUpload">Select File (PDF, Image, Docs):</label>
+      <input type="file" id="fileUpload" accept=".pdf,image/*,.doc,.docx,.txt" />
+      <button id="uploadBtn" type="button">Upload</button>
+      <button id="deleteBtn" type="button" style="background: #c34444; color: white;">Delete File</button>
+    </section>
+  </section>
+
+</div>
+
+<!-- Manage Users Modal -->
+<div id="modalManageUsers" class="modal" role="dialog" aria-modal="true" aria-labelledby="manageUsersHeading" tabindex="-1">
+  <div class="modal-content">
+    <span class="closeBtn" id="closeManageUsers" title="Close Manage Users">&times;</span>
+    <h3 id="manageUsersHeading">Manage Users</h3>
+    <table id="usersTable" aria-live="polite" aria-atomic="true" tabindex="0" style="margin-top: 12px;">
+      <thead>
+        <tr><th>Username</th><th>Role</th><th>Actions</th></tr>
+      </thead>
+      <tbody><!-- User rows go here dynamically --></tbody>
+    </table>
+    <h4 style="margin-top: 15px;">Activity Log (Filtered by Role)</h4>
+    <div id="activityLog" style="max-height: 180px; overflow-y: auto; background: #eef4ff; border: 1px solid #a8cbf8; padding: 10px; margin-top: 8px; border-radius: 6px; font-size: 0.9em;"></div>
+  </div>
+</div>
+
+<!-- CEO Add User Modal -->
+<div id="modalAddUser" class="modal" role="dialog" aria-modal="true" aria-labelledby="ceoAddUserHeading" tabindex="-1">
+  <div class="modal-content">
+    <span class="closeBtn" id="closeAddUserModal" title="Close Add User Form">&times;</span>
+    <h3 id="ceoAddUserHeading">CEO: Add Manager or Member User</h3>
+    <form id="formAddUser" autocomplete="off" aria-describedby="formAddUserInfo">
+      <div>
+        <label for="addFirstName">First Name:</label>
+        <input type="text" id="addFirstName" required aria-required="true" />
+      </div>
+      <div>
+        <label for="addLastName">Last Name:</label>
+        <input type="text" id="addLastName" required aria-required="true" />
+      </div>
+      <div>
+        <label for="addEmail">Email:</label>
+        <input type="email" id="addEmail" required aria-required="true" />
+      </div>
+      <div>
+        <label for="addPhone">Phone Number:</label>
+        <input type="tel" id="addPhone" pattern="\\d{10}" placeholder="10 digits" required aria-required="true" />
+      </div>
+      <div>
+        <label for="addUserRole">User Role:</label>
+        <select id="addUserRole" required aria-required="true">
+          <option value="">--Select Role--</option>
+          <option value="manager">Manager</option>
+          <option value="member">Member</option>
+        </select>
+      </div>
+      <div>
+        <label for="addUsername">Username:</label>
+        <input type="text" id="addUsername" required aria-required="true" />
+        <div id="newUsernameStatus" aria-live="polite" style="font-size: 0.9em; margin-top: 3px;"></div>
+      </div>
+      <button type="submit">Submit to Owner</button>
+    </form>
+  </div>
+</div>
+
+<!-- Google Drive Notes Link Popup -->
+<div id="notesPopupOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="notesPopupTitle">
+  <div id="notesPopup">
+    <span id="closeNotesPopup" class="closeBtn" title="Close Notes">&times;</span>
+    <h3 id="notesPopupTitle">Google Drive Notes Link</h3>
+    <a href="#" target="_blank" rel="noopener noreferrer" id="notesLink" aria-describedby="notesPopupDesc"></a>
+    <p id="notesPopupDesc" style="font-size: 0.9em; color: #555; margin-top: 10px;">Click the link above to open notes in Google Drive.</p>
+  </div>
+</div>
+<script>
+(() => {
+  // Hardcoded password map for simplicity
+  const passwords = {
+    owner: "owner015",
+    ceo: "ashviniverma",
+    manager: "manager123"
+  };
+
+  // Role hierarchy (higher index means lower permission)
+  const rolesHierarchy = ["owner", "ceo", "manager", "member"];
+
+  // Sample user data
+  let users = [
+    { username: "ashviniverma", role: "owner" },
+    { username: "ceo_user", role: "ceo" },
+    { username: "manager1", role: "manager" },
+    { username: "member1", role: "member" }
+  ];
+
+  let activityLog = [];
+  let currentUser = null;
+
+  // Subjects per class for dropdown
+  const subjectsByClass = {
+    "8": ["Chemistry","Physics","Math","English","History","Geography","Civics","Computer","Hindi","Vyakaran"],
+    "9": ["Chemistry","Physics","Math","English","History","Geography","Civics","Computer","Hindi","Vyakaran"],
+    "10":["Chemistry","Physics","Math","English","History","Geography","Civics","Computer","Hindi","Vyakaran"]
+  };
+
+  // Google Drive links (replace placeholders with your real links)
+  const driveFolders = {
+    "8": {
+      Chemistry: {
+        books: "https://drive.google.com/drive/folders/14luNzU1GCoCqo-H38oVjwJ1Q-FTX9X-i_books_chem8",
+        notes: "https://drive.google.com/drive/folders/17rwxyNDE3pc7Ol5YZ2qmrX-euwpx4a2o",
+        schoolNotes: "https://drive.google.com/drive/folders/16Sy82ZOg9lElI-GM6pC9tKOXEXkEqr1-"
+      },
+      Physics: {
+        books: "https://drive.google.com/drive/folders/14luNzU1GCoCqo-H38oVjwJ1Q-FTX9X-i_books_phys8",
+        notes: "https://drive.google.com/drive/folders/17DCQJDaODeZvqV9brIuXcLVoB9oHeXHD",
+        schoolNotes: "https://drive.google.com/drive/folders/16RX7Ojf4XoRkmYRaLQgdXedYcaZx5m4k"
+      },
+      Math: {
+        books: "https://drive.google.com/drive/folders/14luNzU1GCoCqo-H38oVjwJ1Q-FTX9X-i_books_math8",
+        notes: "https://drive.google.com/drive/folders/17rwxyNDE3pc7Ol5YZ2qmrX-euwpx4a2o",
+        schoolNotes: "https://drive.google.com/drive/folders/1776fW3Nnhe83lRYvNJXNhqraIfx4QMqj"
+      },
+      // Add other subjects similarly
+    },
+    // Add Class 9 and 10 data similarly
+  };
+
+  // DOM Elements
+  const roleRadios = document.querySelectorAll('input[name="role"]');
+  const usernameInput = document.getElementById("usernameInput");
+  const usernameStatus = document.getElementById("usernameStatus");
+  const passwordGroup = document.getElementById("passwordGroup");
+  const passwordInput = document.getElementById("passwordInput");
+  const loginForm = document.getElementById("loginForm");
+  const btnManageUsers = document.getElementById("btnManageUsers");
+  const btnAddUserForm = document.getElementById("btnAddUserForm");
+  const btnLogout = document.getElementById("btnLogout");
+  const slideLogin = document.getElementById("slide-login");
+  const slideDashboard = document.getElementById("slide-dashboard");
+
+  const displayRole = document.getElementById("displayRole");
+  const displayUsername = document.getElementById("displayUsername");
+
+  const selectClass = document.getElementById("selectClass");
+  const selectSubject = document.getElementById("selectSubject");
+  const selectNoteType = document.getElementById("selectNoteType");
+  const btnShowNote = document.getElementById("btnShowNote");
+  const notesDisplay = document.getElementById("notesDisplay");
+
+  const modalManageUsers = document.getElementById("modalManageUsers");
+  const closeManageUsersBtn = document.getElementById("closeManageUsers");
+  const usersTableBody = document.querySelector("#usersTable tbody");
+  const activityLogDiv = document.getElementById("activityLog");
+
+  const modalAddUser = document.getElementById("modalAddUser");
+  const closeAddUserBtn = document.getElementById("closeAddUserModal");
+  const formAddUser = document.getElementById("formAddUser");
+  const addUsername = document.getElementById("addUsername");
+  const newUsernameStatus = document.getElementById("newUsernameStatus");
+
+  const notesPopupOverlay = document.getElementById("notesPopupOverlay");
+  const notesPopup = document.getElementById("notesPopup");
+  const notesLink = document.getElementById("notesLink");
+  const closeNotesPopup = document.getElementById("closeNotesPopup");
+
+  // Show/hide password field depending on role
+  function updatePasswordVisibility() {
+    const selectedRole = [...roleRadios].find(r => r.checked)?.value;
+    if (selectedRole === "owner" || selectedRole === "ceo" || selectedRole === "manager") {
+      passwordGroup.classList.remove("hidden");
+    } else {
+      passwordGroup.classList.add("hidden");
+      passwordInput.value = "";
+    }
+    usernameStatus.textContent = "";
+  }
+
+  // Check username validity on input
+  usernameInput.addEventListener("input", () => {
+    const role = [...roleRadios].find(r => r.checked)?.value;
+    const val = usernameInput.value.trim().toLowerCase();
+    if (!val) {
+      usernameStatus.textContent = "";
+      usernameStatus.className = "";
+      return;
+    }
+    const found = users.some(u => u.username.toLowerCase() === val && u.role === role);
+    if (found) {
+      usernameStatus.textContent = `Username valid for role ${role.toUpperCase()}.`;
+      usernameStatus.className = "available";
+    } else {
+      usernameStatus.textContent = `Username not found for role ${role.toUpperCase()}.`;
+      usernameStatus.className = "existing";
+    }
+  });
+
+  // On change role, toggle password
+  roleRadios.forEach(radio => {
+    radio.addEventListener("change", () => {
+      updatePasswordVisibility();
+      usernameInput.value = "";
+      usernameStatus.textContent = "";
+    });
+  });
+
+  // Validate login form on submit
+  loginForm.addEventListener("submit", e => {
+    e.preventDefault();
+
+    const role = [...roleRadios].find(r => r.checked)?.value || "";
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!username) {
+      alert("Please enter your username.");
+      return;
+    }
+
+    const userObj = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.role === role);
+    if (!userObj) {
+      alert(`Username "${username}" not found for role ${role.toUpperCase()}.`);
+      return;
+    }
+
+    if (role !== "member") {
+      if (passwords[role] !== password) {
+        alert("Incorrect password.");
+        return;
+      }
+    }
+
+    currentUser = userObj;
+
+    slideLogin.classList.remove("active");
+    slideDashboard.classList.add("active");
+
+    displayRole.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+    displayUsername.textContent = username;
+
+    btnManageUsers.classList.toggle("hidden", role !== "owner");
+    btnAddUserForm.classList.toggle("hidden", role !== "ceo");
+
+    // Reset selections
+    selectClass.value = "";
+    selectSubject.innerHTML = '<option value="">--Select Subject--</option>';
+    selectSubject.disabled = true;
+    selectNoteType.value = "";
+    selectNoteType.disabled = true;
+    btnShowNote.disabled = true;
+
+    notesDisplay.textContent = "";
+    updateActivityLog();
+  });
+
+  // Logout
+  btnLogout.addEventListener("click", () => {
+    currentUser = null;
+
+    slideDashboard.classList.remove("active");
+    slideLogin.classList.add("active");
+
+    usernameInput.value = "";
+    passwordInput.value = "";
+    usernameStatus.textContent = "";
+    updatePasswordVisibility();
+  });
+
+  // Populate subjects when class changes
+  selectClass.addEventListener("change", () => {
+    const cls = selectClass.value;
+    selectSubject.innerHTML = '<option value="">--Select Subject--</option>';
+    selectSubject.disabled = !cls;
+    selectNoteType.value = "";
+    selectNoteType.disabled = true;
+    btnShowNote.disabled = true;
+    notesDisplay.textContent = "";
+
+    if (cls && subjectsByClass[cls]) {
+      subjectsByClass[cls].forEach(subject => {
+        const opt = document.createElement("option");
+        opt.value = subject;
+        opt.textContent = subject;
+        selectSubject.appendChild(opt);
+      });
+    }
+  });
+
+  selectSubject.addEventListener("change", () => {
+    const subj = selectSubject.value;
+    selectNoteType.value = "";
+    selectNoteType.disabled = !subj;
+    btnShowNote.disabled = true;
+    notesDisplay.textContent = "";
+  });
+
+  selectNoteType.addEventListener("change", () => {
+    btnShowNote.disabled = !(selectNoteType.value && selectSubject.value && selectClass.value);
+    notesDisplay.textContent = "";
+  });
+
+  // Show Notes button clicked
+  btnShowNote.addEventListener("click", () => {
+    const cls = selectClass.value;
+    const subj = selectSubject.value;
+    const noteType = selectNoteType.value;
+    let link = "";
+    if (driveFolders[cls] && driveFolders[cls][subj] && driveFolders[cls][subj][noteType]) {
+      link = driveFolders[cls][subj][noteType];
+    }
+    if (link) {
+      openNotesPopup(link);
+      logActivity(`${currentUser.role.toUppe
